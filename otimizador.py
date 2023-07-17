@@ -1,6 +1,7 @@
 from math import *
-import random
 from enum import Enum
+import random
+import time
 
 class Risco(Enum):
   BAIXO = 0
@@ -150,25 +151,31 @@ def TrocarInvestimentos(self, solucao_atual):
                 break
     return selecionados
 
-def VND(self,kmax, solucao_atual):
+def RVND(self,kmax, solucao_atual):
+  bloqueado = []
   aux_Sol= solucao_atual
   aux_Retorno = calc_retorno_esperado(self,solucao_atual)
   k = 1
   while(k < kmax):
     estrutura = random.randrange(1, 3) 
-    if(estrutura == 1):
-      AdicionarInvestimentos(self,solucao_atual)
-    elif(estrutura == 2):
-      TrocarInvestimentos(self,solucao_atual)
-      
-    retornoAtual = calc_retorno_esperado(self,solucao_atual)
-    if(retornoAtual < aux_Retorno):
-      aux_Retorno = retornoAtual
-      aux_Sol = solucao_atual
-    else:
-      solucao_atual = aux_Sol
-      retornoAtual = aux_Retorno
-      k += 1
+    if (estrutura not in bloqueado):
+      if(estrutura == 1):
+        AdicionarInvestimentos(self,solucao_atual)
+      elif(estrutura == 2):
+        TrocarInvestimentos(self,solucao_atual)
+        
+      retornoAtual = calc_retorno_esperado(self,solucao_atual)
+      if(retornoAtual < aux_Retorno):
+        aux_Retorno = retornoAtual
+        aux_Sol = solucao_atual
+        bloqueado.clear()
+      else:
+        bloqueado.append(estrutura)
+        solucao_atual = aux_Sol
+        retornoAtual = aux_Retorno
+        k += 1
+    elif(len(bloqueado)>= 2):
+            break
   return solucao_atual 
 
 def perturbar_solucao(self, solucao_atual):
@@ -193,14 +200,12 @@ def ILS(self,max_iter, kmax, solucao_inicial):
     melhor_retorno = calc_retorno_esperado(self,melhor_solucao)
     for _ in range(max_iter):
         solucao_atual = perturbar_solucao(self, melhor_solucao)
-        solucao_atual = VND(self,kmax, solucao_atual)  # Aplica o VND para melhorar a solução perturbada
+        solucao_atual = RVND(self,kmax, solucao_atual)  # Aplica o VND para melhorar a solução perturbada
         retorno_atual = calc_retorno_esperado(self,solucao_atual)
         if retorno_atual < melhor_retorno:
             melhor_solucao = solucao_atual
             melhor_retorno = retorno_atual
     return melhor_solucao, melhor_retorno
-
-
 
 class Otimizador:
   """
@@ -246,13 +251,18 @@ class Otimizador:
     return selecionados
 
   def otimimizar(self, numero_de_interacoes:int=100):
+    inicio = time.time()
     solucao_atual = self.construir_solucao_inicial()
+    '''
     print("solução inicial:")
     for investimento in solucao_atual:
       print(f'\t{investimento}')
     print(f"O custo total é R$ {sum(investimento.custo for investimento in solucao_atual)}")
     print(f"O retorno esperado total é R$ {sum(investimento.retorno for investimento in solucao_atual)}\n\n")
-    ILS(self,100,100,solucao_atual)
+    '''
+    ILS(self,50,50,solucao_atual)
+    fim = time.time()
+    print("Tempo de execução:",fim - inicio, )
     return solucao_atual
 
 otimizador = Otimizador(investimentos,
